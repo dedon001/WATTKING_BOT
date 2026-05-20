@@ -21,7 +21,9 @@ from telegram.ext import (
 # BOT SETTINGS
 # =========================
 
-TOKEN = "8704508925:AAHyaCnfxqWRydWDiwkbN4a65VafFOjNGN4"
+import os
+
+TOKEN = os.getenv("TOKEN")
 
 GROUP_LINK = "https://t.me/wattkingsactiveengagementgroup"
 
