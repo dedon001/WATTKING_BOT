@@ -23,7 +23,7 @@ from telegram.ext import (
 
 import os
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = "8704508925:AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
 
 GROUP_LINK = "https://t.me/wattkingsactiveengagementgroup"
 
