@@ -1,14 +1,11 @@
 import re
 import asyncio
 import aiosqlite
-
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ChatPermissions,
 )
-
 from telegram.ext import (
     ApplicationBuilder,
     MessageHandler,
@@ -21,8 +18,6 @@ from telegram.ext import (
 # BOT SETTINGS
 # =========================
 
-import os
-
 TOKEN = "8704508925:AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
 
 GROUP_LINK = "https://t.me/wattkingsactiveengagementgroup"
@@ -31,27 +26,27 @@ POST_TOPIC_ID = 1103
 
 AUTO_MESSAGE = "Drop Your Links and Engage in Others"
 
-WARN_LIMIT = 3
+AUTO_MESSAGE_TIME = 90  # 1 minute 30 seconds
 
 counter = 1
-last_auto_message_id = None
 
+last_auto_message_id = None
 
 # =========================
 # DATABASE
 # =========================
 
-async def setup_database():
+DB_NAME = "database.db"
 
-    async with aiosqlite.connect("database.db") as db:
 
+async def setup_db():
+    async with aiosqlite.connect(DB_NAME) as db:
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS warns (
+        CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
-            warns INTEGER DEFAULT 0
+            username TEXT
         )
         """)
-
         await db.commit()
 
 
@@ -61,28 +56,28 @@ async def setup_database():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    text = """
-🔥 Welcome to WATTKINGS ACTIVE GROUP 🔥
-
-You are now part of the engagement network.
-
-✅ Drop your X links
-✅ Engage with others
-✅ Grow together
-
-Use the button below to join the group.
-"""
-
     keyboard = [
         [
             InlineKeyboardButton(
-                "🔥 Join Group 🔥",
+                "Join Group 🚀",
                 url=GROUP_LINK
             )
         ]
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = f"""
+🔥 Welcome to WATTKINGS ACTIVE ENGAGEMENT 🔥
+
+You are now connected to the engagement system.
+
+✅ Drop your X links
+✅ Engage in others
+✅ Grow together
+
+Click below to join the group.
+"""
 
     await update.message.reply_text(
         text=text,
@@ -94,231 +89,101 @@ Use the button below to join the group.
 # AUTO MESSAGE
 # =========================
 
-async def auto_drop(context: ContextTypes.DEFAULT_TYPE):
+async def auto_post(context: ContextTypes.DEFAULT_TYPE):
 
     global last_auto_message_id
 
+    bot = context.bot
+
     try:
 
-        # SEND NEW MESSAGE FIRST
-        msg = await context.bot.send_message(
-            chat_id=context.job.chat_id,
+        msg = await bot.send_message(
+            chat_id="@wattkingsactiveengagementgroup",
             message_thread_id=POST_TOPIC_ID,
             text=AUTO_MESSAGE
         )
 
-        # DELETE OLD MESSAGE AFTER
-        if last_auto_message_id:
+        new_message_id = msg.message_id
 
+        await asyncio.sleep(5)
+
+        if last_auto_message_id:
             try:
-                await context.bot.delete_message(
-                    chat_id=context.job.chat_id,
+                await bot.delete_message(
+                    chat_id="@wattkingsactiveengagementgroup",
                     message_id=last_auto_message_id
                 )
-
             except:
                 pass
 
-        last_auto_message_id = msg.message_id
+        last_auto_message_id = new_message_id
 
     except Exception as e:
-        print(f"AUTO MESSAGE ERROR: {e}")
+        print("AUTO POST ERROR:", e)
 
 
 # =========================
-# X LINK FORMATTER
+# X LINK DETECTOR
 # =========================
 
-async def x_formatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def contains_x_link(text):
+
+    patterns = [
+        r"x\.com\/",
+        r"twitter\.com\/"
+    ]
+
+    for pattern in patterns:
+        if re.search(pattern, text.lower()):
+            return True
+
+    return False
+
+
+# =========================
+# NUMBERING SYSTEM
+# =========================
+
+async def handle_x_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global counter
 
-    message = update.message
-
-    if not message:
+    if not update.message:
         return
 
-    text = message.text or ""
-
-    x_pattern = r"(https?://(x|twitter)\.com/\S+)"
-
-    match = re.search(x_pattern, text)
-
-    if match:
-
-        x_link = match.group(1)
-
-        tg_username = (
-            f"@{message.from_user.username}"
-            if message.from_user.username
-            else message.from_user.first_name
-        )
-
-        # DELETE ORIGINAL MESSAGE
-        try:
-            await message.delete()
-        except:
-            pass
-
-        formatted = f"""
-#{counter}
-
-{tg_username}
-
-{x_link}
-
-❤️
-"""
-
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            message_thread_id=POST_TOPIC_ID,
-            text=formatted
-        )
-
-        counter += 1
-
-
-# =========================
-# @ALL COMMAND
-# =========================
-
-async def all_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    admins = await context.bot.get_chat_administrators(
-        update.effective_chat.id
-    )
-
-    admin_ids = [admin.user.id for admin in admins]
-
-    if update.effective_user.id not in admin_ids:
+    if not update.message.text:
         return
 
-    members_text = "@all\n\n"
+    text = update.message.text
+
+    if not contains_x_link(text):
+        return
+
+    user = update.effective_user
+
+    username = user.username if user.username else "NoUsername"
+
+    first_name = user.first_name
 
     try:
-
-        async for member in context.bot.get_chat(
-            update.effective_chat.id
-        ):
-            pass
-
+        await update.message.delete()
     except:
         pass
 
-    members_text += "Everyone please check the group."
+    formatted = f"""#{counter}
 
-    await update.message.reply_text(members_text)
+@{username} || X {first_name}
 
+{text}
+"""
 
-# =========================
-# MUTE COMMAND
-# =========================
-
-async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    admins = await context.bot.get_chat_administrators(
-        update.effective_chat.id
-    )
-
-    admin_ids = [admin.user.id for admin in admins]
-
-    if update.effective_user.id not in admin_ids:
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text(
-            "Reply to a user to mute them."
-        )
-        return
-
-    target = update.message.reply_to_message.from_user
-
-    permissions = ChatPermissions(
-        can_send_messages=False
-    )
-
-    await context.bot.restrict_chat_member(
+    await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        user_id=target.id,
-        permissions=permissions
+        message_thread_id=POST_TOPIC_ID,
+        text=formatted
     )
 
-    await update.message.reply_text(
-        f"{target.first_name} has been muted."
-    )
-
-
-# =========================
-# WARN COMMAND
-# =========================
-
-async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    admins = await context.bot.get_chat_administrators(
-        update.effective_chat.id
-    )
-
-    admin_ids = [admin.user.id for admin in admins]
-
-    if update.effective_user.id not in admin_ids:
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text(
-            "Reply to a user to warn them."
-        )
-        return
-
-    target = update.message.reply_to_message.from_user
-
-    async with aiosqlite.connect("database.db") as db:
-
-        cursor = await db.execute(
-            "SELECT warns FROM warns WHERE user_id=?",
-            (target.id,)
-        )
-
-        row = await cursor.fetchone()
-
-        if row:
-            warns = row[0] + 1
-
-            await db.execute(
-                "UPDATE warns SET warns=? WHERE user_id=?",
-                (warns, target.id)
-            )
-
-        else:
-            warns = 1
-
-            await db.execute(
-                "INSERT INTO warns (user_id, warns) VALUES (?, ?)",
-                (target.id, warns)
-            )
-
-        await db.commit()
-
-    await update.message.reply_text(
-        f"{target.first_name} now has {warns} warn(s)."
-    )
-
-    # AUTO MUTE AFTER LIMIT
-    if warns >= WARN_LIMIT:
-
-        permissions = ChatPermissions(
-            can_send_messages=False
-        )
-
-        await context.bot.restrict_chat_member(
-            chat_id=update.effective_chat.id,
-            user_id=target.id,
-            permissions=permissions
-        )
-
-        await update.message.reply_text(
-            f"{target.first_name} has been auto-muted after {WARN_LIMIT} warns."
-        )
+    counter += 1
 
 
 # =========================
@@ -327,63 +192,31 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def main():
 
-    await setup_database()
+    await setup_db()
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # START
-    app.add_handler(
-        CommandHandler("start", start)
-    )
+    app.add_handler(CommandHandler("start", start))
 
-    # MUTE
-    app.add_handler(
-        CommandHandler("mute", mute)
-    )
-
-    # WARN
-    app.add_handler(
-        CommandHandler("warn", warn)
-    )
-
-    # @ALL
-    app.add_handler(
-        CommandHandler("all", all_command)
-    )
-
-    # X FORMATTER
     app.add_handler(
         MessageHandler(
-            filters.TEXT & (~filters.COMMAND),
-            x_formatter
+            filters.TEXT & ~filters.COMMAND,
+            handle_x_links
         )
     )
 
-    # AUTO MESSAGE EVERY 2 MINUTES
-    app.job_queue.run_repeating(
-        auto_drop,
-        interval=90,
-        first=10,
-        chat_id="@wattkingsactiveengagementgroup"
+    job_queue = app.job_queue
+
+    job_queue.run_repeating(
+        auto_post,
+        interval=AUTO_MESSAGE_TIME,
+        first=10
     )
 
-    print("🔥 WATTKING BOT IS RUNNING...")
+    print("WATTKING BOT IS RUNNING...")
 
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+    app.run_polling()
 
-    await asyncio.Event().wait()
-
-
-# =========================
-# RUN BOT
-# =========================
 
 if __name__ == "__main__":
-
-    loop = asyncio.new_event_loop()
-
-    asyncio.set_event_loop(loop)
-
-    loop.run_until_complete(main())
+    asyncio.run(main())
