@@ -1,6 +1,6 @@
 import re
 import asyncio
-import aiosqlite
+import os
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -15,39 +15,21 @@ from telegram.ext import (
 )
 
 # =========================
-# BOT SETTINGS
+# SETTINGS
 # =========================
 
 TOKEN = "8704508925:AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
 
-GROUP_LINK = "https://t.me/wattkingsactiveengagementgroup"
+GROUP_USERNAME = "@wattkingsactiveengagementgroup"
 
 POST_TOPIC_ID = 1103
 
 AUTO_MESSAGE = "Drop Your Links and Engage in Others"
 
-AUTO_MESSAGE_TIME = 90  # 1 minute 30 seconds
+AUTO_MESSAGE_INTERVAL = 90
 
 counter = 1
-
 last_auto_message_id = None
-
-# =========================
-# DATABASE
-# =========================
-
-DB_NAME = "database.db"
-
-
-async def setup_db():
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT
-        )
-        """)
-        await db.commit()
 
 
 # =========================
@@ -59,24 +41,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
             InlineKeyboardButton(
-                "Join Group 🚀",
-                url=GROUP_LINK
+                "🔥 Join Group 🔥",
+                url="https://t.me/wattkingsactiveengagementgroup"
             )
         ]
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    text = f"""
-🔥 Welcome to WATTKINGS ACTIVE ENGAGEMENT 🔥
-
-You are now connected to the engagement system.
+    text = """
+🔥 Welcome to WATTKINGS ACTIVE GROUP 🔥
 
 ✅ Drop your X links
 ✅ Engage in others
 ✅ Grow together
-
-Click below to join the group.
 """
 
     await update.message.reply_text(
@@ -93,92 +71,78 @@ async def auto_post(context: ContextTypes.DEFAULT_TYPE):
 
     global last_auto_message_id
 
-    bot = context.bot
-
     try:
 
-        msg = await bot.send_message(
-            chat_id="@wattkingsactiveengagementgroup",
+        msg = await context.bot.send_message(
+            chat_id=GROUP_USERNAME,
             message_thread_id=POST_TOPIC_ID,
             text=AUTO_MESSAGE
         )
 
-        new_message_id = msg.message_id
-
-        await asyncio.sleep(5)
-
+        # DELETE OLD MESSAGE AFTER NEW ONE SENDS
         if last_auto_message_id:
+
             try:
-                await bot.delete_message(
-                    chat_id="@wattkingsactiveengagementgroup",
+                await context.bot.delete_message(
+                    chat_id=GROUP_USERNAME,
                     message_id=last_auto_message_id
                 )
+
             except:
                 pass
 
-        last_auto_message_id = new_message_id
+        last_auto_message_id = msg.message_id
 
     except Exception as e:
-        print("AUTO POST ERROR:", e)
+        print("AUTO MESSAGE ERROR:", e)
 
 
 # =========================
-# X LINK DETECTOR
+# X LINK FORMATTER
 # =========================
 
-def contains_x_link(text):
-
-    patterns = [
-        r"x\.com\/",
-        r"twitter\.com\/"
-    ]
-
-    for pattern in patterns:
-        if re.search(pattern, text.lower()):
-            return True
-
-    return False
-
-
-# =========================
-# NUMBERING SYSTEM
-# =========================
-
-async def handle_x_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def x_formatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global counter
 
     if not update.message:
         return
 
-    if not update.message.text:
-        return
+    text = update.message.text or ""
 
-    text = update.message.text
+    patterns = [
+        "x.com/",
+        "twitter.com/"
+    ]
 
-    if not contains_x_link(text):
+    if not any(p in text.lower() for p in patterns):
         return
 
     user = update.effective_user
 
-    username = user.username if user.username else "NoUsername"
-
-    first_name = user.first_name
+    username = (
+        f"@{user.username}"
+        if user.username
+        else user.first_name
+    )
 
     try:
         await update.message.delete()
     except:
         pass
 
-    formatted = f"""#{counter}
+    formatted = f"""
+#{counter}
 
-@{username} || X {first_name}
+{username}
 
 {text}
+
+❤️
 """
 
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=GROUP_USERNAME,
         message_thread_id=POST_TOPIC_ID,
         text=formatted
     )
@@ -190,33 +154,38 @@ async def handle_x_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # MAIN
 # =========================
 
-async def main():
-
-    await setup_db()
+def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
+    # START COMMAND
+    app.add_handler(
+        CommandHandler("start", start)
+    )
 
+    # X FORMATTER
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            handle_x_links
+            filters.TEXT & (~filters.COMMAND),
+            x_formatter
         )
     )
 
-    job_queue = app.job_queue
-
-    job_queue.run_repeating(
+    # AUTO MESSAGE LOOP
+    app.job_queue.run_repeating(
         auto_post,
-        interval=AUTO_MESSAGE_TIME,
+        interval=AUTO_MESSAGE_INTERVAL,
         first=10
     )
 
-    print("WATTKING BOT IS RUNNING...")
+    print("🔥 WATTKING BOT IS RUNNING...")
 
     app.run_polling()
 
 
+# =========================
+# RUN BOT
+# =========================
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
