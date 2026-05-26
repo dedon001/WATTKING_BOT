@@ -18,7 +18,7 @@ from telegram.ext import (
 # SETTINGS
 # =========================
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = "8704508925:AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
 
 GROUP_USERNAME = "@wattkingsactiveengagementgroup"
 
