@@ -1,16 +1,16 @@
-import re
-import asyncio
 import os
+import re
 from telegram import (
     Update,
     InlineKeyboardButton,
-    InlineKeyboardMarkup,
+    InlineKeyboardMarkup
 )
+
 from telegram.ext import (
     ApplicationBuilder,
-    MessageHandler,
-    CommandHandler,
     ContextTypes,
+    CommandHandler,
+    MessageHandler,
     filters,
 )
 
@@ -18,7 +18,7 @@ from telegram.ext import (
 # SETTINGS
 # =========================
 
-TOKEN = "8704508925:AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
+TOKEN = "AAGFdyw1b3X3Nvq0hZOr3SiOoBKwVyBppAM"
 
 GROUP_USERNAME = "@wattkingsactiveengagementgroup"
 
@@ -79,7 +79,7 @@ async def auto_post(context: ContextTypes.DEFAULT_TYPE):
             text=AUTO_MESSAGE
         )
 
-        # DELETE OLD MESSAGE AFTER NEW ONE SENDS
+        # DELETE OLD MESSAGE
         if last_auto_message_id:
 
             try:
@@ -94,7 +94,7 @@ async def auto_post(context: ContextTypes.DEFAULT_TYPE):
         last_auto_message_id = msg.message_id
 
     except Exception as e:
-        print("AUTO MESSAGE ERROR:", e)
+        print(f"AUTO MESSAGE ERROR: {e}")
 
 
 # =========================
@@ -110,12 +110,12 @@ async def x_formatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text or ""
 
-    patterns = [
+    x_patterns = [
         "x.com/",
         "twitter.com/"
     ]
 
-    if not any(p in text.lower() for p in patterns):
+    if not any(pattern in text.lower() for pattern in x_patterns):
         return
 
     user = update.effective_user
@@ -126,13 +126,13 @@ async def x_formatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else user.first_name
     )
 
+    # DELETE ORIGINAL MESSAGE
     try:
         await update.message.delete()
     except:
         pass
 
-    formatted = f"""
-#{counter}
+    formatted = f"""#{counter}
 
 {username}
 
@@ -156,14 +156,18 @@ async def x_formatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .build()
+    )
 
     # START COMMAND
     app.add_handler(
         CommandHandler("start", start)
     )
 
-    # X FORMATTER
+    # X LINK FORMATTER
     app.add_handler(
         MessageHandler(
             filters.TEXT & (~filters.COMMAND),
@@ -178,13 +182,16 @@ def main():
         first=10
     )
 
-    print("🔥 WATTKING BOT IS RUNNING...")
+    print("🔥 WATTKING BOT RUNNING...")
 
-    app.run_polling()
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
 
 
 # =========================
-# RUN BOT
+# RUN
 # =========================
 
 if __name__ == "__main__":
