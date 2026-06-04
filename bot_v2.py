@@ -8,9 +8,11 @@ InlineKeyboardMarkup
 )
 
 from telegram.ext import (
-ApplicationBuilder,
-ContextTypes,
-CommandHandler
+    ApplicationBuilder,
+    ContextTypes,
+    CommandHandler,
+    MessageHandler,
+    filters
 )
 
 print("=" * 50)
@@ -137,7 +139,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# =========================
+# DEBUG TOPIC ID
+# =========================
 
+async def debug_topic(update, context):
+    if update.message:
+        print(
+            "TOPIC ID:",
+            update.message.message_thread_id
+        )
 # =========================
 # MAIN
 # =========================
@@ -155,7 +166,13 @@ def main():
     app.add_handler(
         CommandHandler("start", start)
     )
-
+app.add_handler(
+    MessageHandler(
+        filters.ALL,
+        debug_topic
+    ),
+    group=999
+)
     print("🔥 WATTKINGS BOT V2 STARTING...")
 
     app.run_polling(
