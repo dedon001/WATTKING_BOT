@@ -166,13 +166,15 @@ def main():
     app.add_handler(
         CommandHandler("start", start)
     )
-app.add_handler(
-    MessageHandler(
-        filters.ALL,
-        debug_topic
-    ),
-    group=999
-)
+
+    app.add_handler(
+        MessageHandler(
+            filters.ALL,
+            debug_topic
+        ),
+        group=999
+    )
+
     print("🔥 WATTKINGS BOT V2 STARTING...")
 
     app.run_polling(
