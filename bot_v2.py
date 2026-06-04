@@ -11,7 +11,8 @@ from telegram.ext import (
 # SETTINGS
 # =========================
 
-TOKEN = "8704508925:AAF3Y78zAWI4Clmhw09mwUocM-8vZLcsfz8"
+TOKEN = os.getenv("BOT_TOKEN")
+print("BOT TOKEN FOUND:", bool(TOKEN))
 
 GROUP_ID = -1003337623917
 
