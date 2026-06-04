@@ -1,4 +1,17 @@
 import os
+import sqlite3
+
+from telegram import (
+Update,
+InlineKeyboardButton,
+InlineKeyboardMarkup
+)
+
+from telegram.ext import (
+ApplicationBuilder,
+ContextTypes,
+CommandHandler
+)
 
 print("=" * 50)
 print("RUNNING BOT_V2")
