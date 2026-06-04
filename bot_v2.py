@@ -17,7 +17,7 @@ print("=" * 50)
 print("RUNNING BOT_V2")
 print("=" * 50)
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "8704508925:AAF3Y78zAWI4Clmhw09mwUocM-8vZLcsfz8"
 
 print("BOT TOKEN FOUND:", bool(TOKEN))
 
