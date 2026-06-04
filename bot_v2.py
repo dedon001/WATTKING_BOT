@@ -1,17 +1,11 @@
 import os
-import sqlite3
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder,
-    ContextTypes,
-    CommandHandler,
-)
 
-# =========================
-# SETTINGS
-# =========================
+print("=" * 50)
+print("RUNNING BOT_V2")
+print("=" * 50)
 
 TOKEN = os.getenv("BOT_TOKEN")
+
 print("BOT TOKEN FOUND:", bool(TOKEN))
 
 GROUP_ID = -1003337623917
