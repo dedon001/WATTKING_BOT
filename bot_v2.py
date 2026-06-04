@@ -218,7 +218,6 @@ app.add_handler(
     )
 )
 
-
     print("🔥 WATTKINGS BOT V2 STARTING...")
 
     app.run_polling(
