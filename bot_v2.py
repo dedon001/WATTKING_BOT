@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import re
 
 from telegram import (
 Update,
@@ -112,6 +113,59 @@ def increment_counter(topic_id):
 
 
 # =========================
+# X LINK HANDLER
+# =========================
+
+async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not update.message:
+        return
+
+    topic_id = update.message.message_thread_id
+
+    if topic_id not in TOPICS:
+        return
+
+    text = update.message.text or ""
+
+    if not (
+        "x.com/" in text.lower()
+        or "twitter.com/" in text.lower()
+    ):
+        return
+
+    user = update.effective_user
+
+    username = (
+        f"@{user.username}"
+        if user.username
+        else user.first_name
+    )
+
+    try:
+        await update.message.delete()
+    except:
+        pass
+
+    number = increment_counter(topic_id)
+
+    emoji = TOPICS[topic_id]["emoji"]
+
+    formatted = f"""{emoji} #{number}
+
+👤 {username}
+
+🔗 {text}
+"""
+
+    await context.bot.send_message(
+        chat_id=GROUP_ID,
+        message_thread_id=topic_id,
+        text=formatted
+    )
+
+
+# =========================
 # START COMMAND
 # =========================
 
@@ -153,9 +207,16 @@ def main():
         .build()
     )
 
-    app.add_handler(
-        CommandHandler("start", start)
+  app.add_handler(
+    CommandHandler("start", start)
+)
+
+app.add_handler(
+    MessageHandler(
+        filters.TEXT & (~filters.COMMAND),
+        x_link_handler
     )
+)
 
 
     print("🔥 WATTKINGS BOT V2 STARTING...")
