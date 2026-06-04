@@ -140,16 +140,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # =========================
-# DEBUG TOPIC ID
-# =========================
-
-async def debug_topic(update, context):
-    if update.message:
-        print(
-            "TOPIC ID:",
-            update.message.message_thread_id
-        )
-# =========================
 # MAIN
 # =========================
 
@@ -167,13 +157,6 @@ def main():
         CommandHandler("start", start)
     )
 
-    app.add_handler(
-        MessageHandler(
-            filters.ALL,
-            debug_topic
-        ),
-        group=999
-    )
 
     print("🔥 WATTKINGS BOT V2 STARTING...")
 
