@@ -1,0 +1,168 @@
+import os
+import sqlite3
+
+from telegram import (
+Update,
+InlineKeyboardButton,
+InlineKeyboardMarkup
+)
+
+from telegram.ext import (
+ApplicationBuilder,
+ContextTypes,
+CommandHandler
+)
+
+print("=" * 50)
+print("RUNNING BOT_V2")
+print("=" * 50)
+
+TOKEN = os.getenv("BOT_TOKEN")
+
+print("BOT TOKEN FOUND:", bool(TOKEN))
+
+GROUP_ID = -1003337623917
+
+TOPICS = {
+    1103: {
+        "name": "5 Engagements",
+        "emoji": "🔥",
+        "counter_key": "topic_1103",
+    },
+    1107: {
+        "name": "15 Engagements",
+        "emoji": "🔥",
+        "counter_key": "topic_1107",
+    },
+    19381: {
+        "name": "10 Likes",
+        "emoji": "❤️",
+        "counter_key": "topic_19381",
+    },
+}
+
+DB_FILE = "database.db"
+
+# =========================
+# DATABASE
+# =========================
+
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS counters (
+        topic_id INTEGER PRIMARY KEY,
+        current_number INTEGER NOT NULL
+    )
+    """)
+
+    for topic_id in TOPICS:
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO counters
+            (topic_id, current_number)
+            VALUES (?, ?)
+            """,
+            (topic_id, 1)
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def get_counter(topic_id):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT current_number FROM counters WHERE topic_id=?",
+        (topic_id,)
+    )
+
+    row = cur.fetchone()
+
+    conn.close()
+
+    return row[0] if row else 1
+
+
+def increment_counter(topic_id):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    current = get_counter(topic_id)
+
+    cur.execute(
+        """
+        UPDATE counters
+        SET current_number=?
+        WHERE topic_id=?
+        """,
+        (current + 1, topic_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return current
+
+
+# =========================
+# START COMMAND
+# =========================
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "🔥 Join Group 🔥",
+                url="https://t.me/wattkingsactiveengagementgroup"
+            )
+        ]
+    ]
+
+    text = """
+🔥 Welcome to WATTKINGS ACTIVE GROUP 🔥
+
+✅ Drop your X links
+✅ Follow topic rules
+✅ Stay active
+"""
+
+    await update.message.reply_text(
+        text=text,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+# =========================
+# MAIN
+# =========================
+
+def main():
+
+    init_db()
+
+    app = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .build()
+    )
+
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    print("🔥 WATTKINGS BOT V2 STARTING...")
+
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
+
+
+if __name__ == "__main__":
+    main()
