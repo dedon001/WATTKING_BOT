@@ -199,7 +199,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-```
 init_db()
 
 app = (
@@ -225,9 +224,6 @@ app.run_polling(
     drop_pending_updates=True,
     allowed_updates=Update.ALL_TYPES
 )
-```
-
-
 
 if __name__ == "__main__":
     main()
