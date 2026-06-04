@@ -194,7 +194,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # =========================
+
 # MAIN
+
 # =========================
 
 def main():
@@ -225,5 +227,5 @@ app.run_polling(
     allowed_updates=Update.ALL_TYPES
 )
 
-if __name__ == "__main__":
-    main()
+if **name** == "**main**":
+main()
