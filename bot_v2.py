@@ -201,31 +201,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-  init_db()
+    print("RUNNING init_db()")
+    init_db()
+    print("init_db() FINISHED")
 
-  app = (
+app = (
     ApplicationBuilder()
     .token(TOKEN)
     .build()
 )
 
-  app.add_handler(
+app.add_handler(
     CommandHandler("start", start)
 )
 
-  app.add_handler(
+app.add_handler(
     MessageHandler(
         filters.TEXT & (~filters.COMMAND),
         x_link_handler
     )
 )
 
-  print("🔥 WATTKINGS BOT V2 STARTING...")
+print("🔥 WATTKINGS BOT V2 STARTING...")
 
-  app.run_polling(
+app.run_polling(
     drop_pending_updates=True,
     allowed_updates=Update.ALL_TYPES
 )
 
-  if __name__ == "__main__":
+if __name__ == "__main__":
     main()
