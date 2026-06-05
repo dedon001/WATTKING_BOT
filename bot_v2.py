@@ -158,11 +158,31 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔗 {text}
 """
 
-    await context.bot.send_message(
+    posted = await context.bot.send_message(
+    chat_id=GROUP_ID,
+    message_thread_id=topic_id,
+    text=formatted
+    )
+
+    if topic_id == 1103:
+
+        warning = await context.bot.send_message(
         chat_id=GROUP_ID,
         message_thread_id=topic_id,
-        text=formatted
+        text="⚠️ Make sure to Engage previous 5 links"
     )
+
+    import asyncio
+
+    await asyncio.sleep(10)
+
+    try:
+        await context.bot.delete_message(
+            chat_id=GROUP_ID,
+            message_id=warning.message_id
+        )
+    except:
+        pass
 
 
 # =========================
