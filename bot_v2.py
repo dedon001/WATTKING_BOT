@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import re
+import asyncio
 
 from telegram import (
 Update,
@@ -45,6 +46,11 @@ TOPICS = {
 }
 
 DB_FILE = "database.db"
+
+AUTO_TOPIC = 1107
+AUTO_MESSAGE = "📢 Drop Your Link And Engage In Other Previous Links"
+
+last_auto_message_id = None
 
 # =========================
 # DATABASE
@@ -159,21 +165,21 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
 
     posted = await context.bot.send_message(
-    chat_id=GROUP_ID,
-    message_thread_id=topic_id,
-    text=formatted
+        chat_id=GROUP_ID,
+        message_thread_id=topic_id,
+        text=formatted
     )
 
     warning_text = None
 
     if topic_id == 1103:
-     warning_text = "⚠️ Make sure to Engage previous 5 links"
+        warning_text = "⚠️ Make sure to Engage previous 5 links"
 
     elif topic_id == 1107:
-     warning_text = "⚠️ Make sure to Engage previous 15 links"
+        warning_text = "⚠️ Make sure to Engage previous 15 links"
 
     elif topic_id == 19381:
-     warning_text = "⚠️ Make sure to Engage (Like) previous 10 links"
+        warning_text = "⚠️ Make sure to Engage (Like) previous 10 links"
 
     if warning_text:
 
@@ -195,6 +201,32 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         pass
 
+async def auto_post(context: ContextTypes.DEFAULT_TYPE):
+
+    global last_auto_message_id
+
+    try:
+
+        if last_auto_message_id:
+
+            try:
+                await context.bot.delete_message(
+                    chat_id=GROUP_ID,
+                    message_id=last_auto_message_id
+                )
+            except:
+                pass
+
+        msg = await context.bot.send_message(
+            chat_id=GROUP_ID,
+            message_thread_id=1107,
+            text="📢 Drop Your Link And Engage In Other Previous Links"
+        )
+
+        last_auto_message_id = msg.message_id
+
+    except Exception as e:
+        print("AUTO MESSAGE ERROR:", e)
 
 # =========================
 # START COMMAND
@@ -240,6 +272,12 @@ def main():
         ApplicationBuilder()
         .token(TOKEN)
         .build()
+    )
+
+    app.job_queue.run_repeating(
+        auto_post,
+        interval=80,
+        first=10
     )
 
     app.add_handler(
