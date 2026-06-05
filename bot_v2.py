@@ -205,29 +205,29 @@ def main():
     init_db()
     print("init_db() FINISHED")
 
-app = (
-    ApplicationBuilder()
-    .token(TOKEN)
-    .build()
-)
-
-app.add_handler(
-    CommandHandler("start", start)
-)
-
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & (~filters.COMMAND),
-        x_link_handler
+    app = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .build()
     )
-)
 
-print("🔥 WATTKINGS BOT V2 STARTING...")
+    app.add_handler(
+        CommandHandler("start", start)
+    )
 
-app.run_polling(
-    drop_pending_updates=True,
-    allowed_updates=Update.ALL_TYPES
-)
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & (~filters.COMMAND),
+            x_link_handler
+        )
+    )
+
+    print("🔥 WATTKINGS BOT V2 STARTING...")
+
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
 
 if __name__ == "__main__":
     main()
