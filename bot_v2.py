@@ -172,6 +172,9 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif topic_id == 1107:
      warning_text = "⚠️ Make sure to Engage previous 15 links"
 
+    elif topic_id == 19381:
+     warning_text = "⚠️ Make sure to Engage (Like) previous 10 links"
+
     if warning_text:
 
      warning = await context.bot.send_message(
