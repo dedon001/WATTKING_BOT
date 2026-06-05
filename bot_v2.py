@@ -139,6 +139,22 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         or "twitter.com/" in text.lower()
     ):
         return
+    # Convert Topic 19381 links into X Like links
+
+    if topic_id == 19381:
+
+        match = re.search(
+        r"/status/(\d+)",
+        text
+    )
+
+    if match:
+
+        tweet_id = match.group(1)
+
+        text = (
+            f"https://x.com/intent/like?tweet_id={tweet_id}"
+        )
 
     user = update.effective_user
 
