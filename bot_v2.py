@@ -201,7 +201,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-init_db()
+ init_db()
 
 app = (
     ApplicationBuilder()
@@ -227,5 +227,5 @@ app.run_polling(
     allowed_updates=Update.ALL_TYPES
 )
 
-if **name** == "**main**":
-main()
+if __name__ == "__main__":
+    main()
