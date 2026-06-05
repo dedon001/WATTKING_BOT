@@ -3,6 +3,8 @@ import sqlite3
 import re
 import asyncio
 
+from datetime import time
+
 from telegram import (
 Update,
 InlineKeyboardButton,
@@ -244,6 +246,26 @@ async def auto_post(context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print("AUTO MESSAGE ERROR:", e)
 
+async def reset_counters(context: ContextTypes.DEFAULT_TYPE):
+
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    for topic_id in TOPICS:
+        cur.execute(
+            """
+            UPDATE counters
+            SET current_number=1
+            WHERE topic_id=?
+            """,
+            (topic_id,)
+        )
+
+    conn.commit()
+    conn.close()
+
+    print("COUNTERS RESET TO 1")
+
 # =========================
 # START COMMAND
 # =========================
@@ -294,6 +316,11 @@ def main():
         auto_post,
         interval=80,
         first=10
+    )
+
+    app.job_queue.run_daily(
+        reset_counters,
+        time=time(hour=1, minute=0)
     )
 
     app.add_handler(
