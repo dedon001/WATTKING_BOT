@@ -47,6 +47,12 @@ TOPICS = {
     },
 }
 
+COOLDOWNS = {
+    1103: 5,
+    1107: 15,
+    19381: 10
+}
+
 DB_FILE = "database.db"
 
 AUTO_TOPIC = 1107
@@ -66,6 +72,15 @@ def init_db():
     CREATE TABLE IF NOT EXISTS counters (
         topic_id INTEGER PRIMARY KEY,
         current_number INTEGER NOT NULL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS user_cooldowns (
+        user_id INTEGER,
+        topic_id INTEGER,
+        last_post_number INTEGER,
+        PRIMARY KEY (user_id, topic_id)
     )
     """)
 
@@ -119,6 +134,42 @@ def increment_counter(topic_id):
 
     return current
 
+def get_user_cooldown(user_id, topic_id):
+
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT last_post_number
+        FROM user_cooldowns
+        WHERE user_id=? AND topic_id=?
+        """,
+        (user_id, topic_id)
+    )
+
+    row = cur.fetchone()
+
+    conn.close()
+
+    return row[0] if row else None
+
+def save_user_cooldown(user_id, topic_id, post_number):
+
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO user_cooldowns
+        (user_id, topic_id, last_post_number)
+        VALUES (?, ?, ?)
+        """,
+        (user_id, topic_id, post_number)
+    )
+
+    conn.commit()
+    conn.close()
 
 # =========================
 # X LINK HANDLER
@@ -166,12 +217,54 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else user.first_name
     )
 
+    required_gap = COOLDOWNS[topic_id]
+
+    last_post = get_user_cooldown(
+    user.id,
+    topic_id
+    )
+
+    current_number = get_counter(topic_id)
+
+    if last_post is not None:
+
+     if current_number - last_post < required_gap:
+
+        try:
+            await update.message.delete()
+        except:
+            pass
+
+        warning = await context.bot.send_message(
+            chat_id=GROUP_ID,
+            message_thread_id=topic_id,
+            text=f"⚠️ Wait for {required_gap} links before you drop another link"
+        )
+
+        await asyncio.sleep(10)
+
+        try:
+            await context.bot.delete_message(
+                chat_id=GROUP_ID,
+                message_id=warning.message_id
+            )
+        except:
+            pass
+
+        return
+
     try:
         await update.message.delete()
     except:
         pass
 
     number = increment_counter(topic_id)
+
+    save_user_cooldown(
+        user.id,
+        topic_id,
+        number
+    )
 
     emoji = TOPICS[topic_id]["emoji"]
 
@@ -260,6 +353,10 @@ async def reset_counters(context: ContextTypes.DEFAULT_TYPE):
             """,
             (topic_id,)
         )
+
+    cur.execute(
+        "DELETE FROM user_cooldowns"
+    )
 
     conn.commit()
     conn.close()
