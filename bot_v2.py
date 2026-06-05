@@ -164,12 +164,20 @@ async def x_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text=formatted
     )
 
-    if topic_id == 1103:
+    warning_text = None
 
-        warning = await context.bot.send_message(
+    if topic_id == 1103:
+     warning_text = "⚠️ Make sure to Engage previous 5 links"
+
+    elif topic_id == 1107:
+     warning_text = "⚠️ Make sure to Engage previous 15 links"
+
+    if warning_text:
+
+     warning = await context.bot.send_message(
         chat_id=GROUP_ID,
         message_thread_id=topic_id,
-        text="⚠️ Make sure to Engage previous 5 links"
+        text=warning_text
     )
 
     import asyncio
